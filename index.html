@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Durian Analytics – วิเคราะห์ & สร้างแคมเปญ (Domain‑Tuned)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <a class="nav-brand" href="index.html">
+      <img src="assets/logo.png" alt="Durian Analytics Logo" class="nav-logo"/>
+      <h1 class="animate-color">Durian Analytics</h1>
+    </a>
+    <div class="nav-menu">
+      <a href="history.html" class="history-button"><span class="history-icon">📋</span> ประวัติ</a>
+      <a href="login.html" class="history-button">เข้าสู่ระบบ</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="dashboard-title">
+      <h1>วิเคราะห์ความรู้สึก + สร้างแคมเปญ</h1>
+    </div>
+
+    <div class="analysis-input">
+      <h2>วิเคราะห์ข้อความ</h2>
+      <div class="source-selector">
+        <label class="source-item"><input type="checkbox" checked /> Facebook</label>
+        <label class="source-item"><input type="checkbox" checked /> Twitter/X</label>
+        <label class="source-item"><input type="checkbox" checked /> Instagram</label>
+      </div>
+      <textarea id="analysis-text" placeholder="พิมพ์ข้อความภาษาไทยที่ต้องการวิเคราะห์... เช่น ทุเรียนไม่อร่อย"></textarea>
+      <div class="text-validation" id="validation" style="display:none;color:var(--error-color)"></div>
+
+      <div style="display:flex;gap:12px;align-items:center;margin:10px 0 4px">
+        <label class="source-item" style="user-select:none;">
+          <input type="checkbox" id="domain-tuner" checked />
+          ใช้ตัวปรับจูนโดเมน (แนะนำ - เปิดตลอด)
+        </label>
+        <label class="source-item" style="user-select:none;">
+          <input type="checkbox" id="gemini-classifier"/>
+          ใช้ Gemini ช่วยวิเคราะห์ (สำหรับข้อความซับซ้อน)
+        </label>
+      </div>
+
+      <div class="button-group">
+        <button class="interactive-button" id="analyze-btn">วิเคราะห์ข้อความ</button>
+        <a href="history.html" class="history-button" id="history-btn"><span class="history-icon">📋</span> ดูประวัติ</a>
+        <button class="save-button" id="save-btn" style="display:none;">💾 บันทึกผล</button>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <h2 class="card-title">การวิเคราะห์ความรู้สึก</h2>
+        <div class="chart-container"><canvas id="sentimentChart"></canvas></div>
+        <div class="metrics-grid">
+          <div class="metric-item"><div class="metric-value" id="posVal">0%</div><div class="metric-label">เชิงบวก</div></div>
+          <div class="metric-item"><div class="metric-value" id="neuVal">0%</div><div class="metric-label">เป็นกลาง</div></div>
+          <div class="metric-item"><div class="metric-value" id="negVal">0%</div><div class="metric-label">เชิงลบ</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">การวิเคราะห์คำสำคัญ</h2>
+        <div id="keyword-positive" class="keyword-analysis">
+          <div class="keyword-category">
+            <div class="keyword-title">คำเชิงบวก</div>
+            <div id="posKeywords" class="keyword-list"></div>
+          </div>
+          <div class="keyword-category">
+            <div class="keyword-title">คำเป็นกลาง/ทั่วไป</div>
+            <div id="mixKeywords" class="keyword-list"></div>
+          </div>
+          <div class="keyword-category">
+            <div class="keyword-title">คำเชิงลบ</div>
+            <div id="negKeywords" class="keyword-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">แนวโน้ม (จำลองเพื่อเดโม)</h2>
+        <div class="chart-container"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">คำแนะนำสำหรับแคมเปญ (จาก Gemini)</h2>
+        <div id="campaign-suggestions" class="campaign-suggestions">
+          <div class="suggestion-item">ยังไม่มีผลลัพธ์ — กด "วิเคราะห์ข้อความ" เพื่อให้ Gemini สร้างแคมเปญ</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-overlay" id="loading" style="display:none">
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <p style="margin:12px 0 0">กำลังวิเคราะห์ข้อความ...</p>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/domain-tuner.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/ui-utils.js"></script>
+  <script src="js/storage-manager.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
