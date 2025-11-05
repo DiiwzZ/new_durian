@@ -106,7 +106,6 @@ class AuthManager {
 
         if (this.isLoggedIn()) {
             navMenu.innerHTML = `
-                <a href="history.html" class="history-button"><span class="history-icon">📋</span> ประวัติ</a>
                 <span class="user-info">สวัสดี, ${this.currentUser.username}</span>
                 <button class="logout-button" onclick="authManager.logout()">ออกจากระบบ</button>
             `;

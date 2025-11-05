@@ -7,27 +7,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    :root{
-      --primary-color:#4AD8B9;--text-color:#2C3E50;--border-color:#E1E8F0;--background-color:#F8FAFD
-    }
-    body{font-family:"Prompt",system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--text-color);margin:0;background:#fff;}
-    header{border-bottom:1px solid var(--border-color);}
-    .container{max-width:1000px;margin:0 auto;padding:20px}
+    body{font-family:"Prompt",system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--text-color);margin:0;background:var(--background-color);}
+    header{border-bottom:1px solid var(--border-color);}    
+    .container{padding:20px}
     .header-content{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
     .nav-brand{display:flex;align-items:center;gap:10px;color:var(--text-color);text-decoration:none}
     .nav-logo{height:40px;width:40px;border-radius:10px}
-    .animate-color{background:linear-gradient(90deg,#4AD8B9,#6C63FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .animate-color{background:linear-gradient(90deg,var(--primary-color),var(--secondary-color));-webkit-background-clip:text;background-clip:text;color:transparent}
     .back-home-button{border:1px solid var(--border-color);padding:8px 14px;border-radius:10px;text-decoration:none;color:var(--text-color)}
     .card{background:#fff;border:1px solid var(--border-color);border-radius:16px;padding:18px}
     table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid var(--border-color);vertical-align:top}
+    thead th{position:sticky;top:0;background:#fff;z-index:1}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--border-color);vertical-align:top}
     tr:hover{background:#FAFCFF}
+    .cell-date{white-space:nowrap;width:140px}
+    .cell-result{white-space:nowrap;width:180px}
     .pill{display:inline-block;background:var(--background-color);border:1px solid var(--border-color);padding:2px 10px;border-radius:12px;margin:2px}
     .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:10000;align-items:center;justify-content:center}
-    .modal{background:#fff;min-width:320px;max-width:90vw;padding:24px;border-radius:16px;position:relative}
+    .modal{background:#fff;min-width:320px;max-width:900px;width:90vw;padding:24px;border-radius:16px;position:relative}
     .close{position:absolute;top:10px;right:12px;font-size:22px;background:none;border:none;color:#888;cursor:pointer}
-    .chart-box{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;margin-top:16px}
-    .chart-cell{flex:1 1 240px;min-width:220px;max-width:280px;text-align:center}
+    .chart-box{display:flex;gap:24px;justify-content:center;margin-top:12px}
+    .chart-cell{text-align:center}
   </style>
 </head>
 <body>
@@ -46,10 +46,8 @@
     <div class="container">
       <div class="dashboard-title">
         <h1>ประวัติการวิเคราะห์</h1>
-        <p>เก็บข้อมูลจาก LocalStorage (key: <code>durian_history</code>)</p>
       </div>
       <div class="card">
-        <h2 class="card-title">รายการประวัติ</h2>
         <div id="history-table"></div>
       </div>
     </div>
@@ -90,14 +88,14 @@
       if(!arr.length){ el.innerHTML = '<div style="padding:18px;text-align:center;color:#8aa">ไม่มีประวัติ</div>'; return; }
       const rows = arr.map((x,i)=>`
         <tr data-idx="${i}" class="row">
-          <td style="white-space:nowrap">${x.date||'-'}</td>
+          <td class="cell-date">${x.date||'-'}</td>
           <td>${(x.text||'').replace(/</g,'&lt;')}</td>
-          <td><b>${x.sentiment||'-'}</b> (${x.polarity||'-'} / ${Math.round(x.score||0)}%)</td>
+          <td class="cell-result"><b>${x.sentiment||'-'}</b> (${x.polarity||'-'} / ${Math.round(x.score||0)}%)</td>
           <td>${(x.keywords?.pos||[]).slice(0,6).map(k=>`<span class="pill">${k}</span>`).join('')}
               ${(x.keywords?.neg||[]).slice(0,6).map(k=>`<span class="pill">${k}</span>`).join('')}</td>
         </tr>`).join('');
       el.innerHTML = `<table>
-        <thead><tr><th>วันที่</th><th>ข้อความ</th><th>ผลลัพธ์</th><th>คำสำคัญ</th></tr></thead>
+        <thead><tr><th class="cell-date">วันที่</th><th>ข้อความ</th><th class="cell-result">ผลลัพธ์</th><th>คำสำคัญ</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
       document.querySelectorAll('.row').forEach(tr=> tr.addEventListener('click',()=> showModal(+tr.dataset.idx)));
@@ -113,15 +111,23 @@
         <div style="margin:6px 0"><b>ข้อความ:</b><br><span class="pill" style="display:inline-block;margin-top:6px">${(it.text||'').replace(/</g,'&lt;')}</span></div>
         <div><b>ผลวิเคราะห์:</b> ${it.sentiment||'-'} (${it.polarity||'-'} / ${Math.round(it.score||0)}%)</div>
       `;
-      // Chart
+      // Chart (ใช้สัดส่วนจากคีย์เวิร์ดจริง ถ้ามี)
       if(window._m){ window._m.destroy(); }
-      const d = [0,0,0];
-      if(it.polarity==='positive'){ d[0]=it.score; d[1]=Math.max(0,100-it.score-5); d[2]=100-d[0]-d[1]; }
-      else if(it.polarity==='negative'){ d[2]=it.score; d[1]=Math.max(0,100-it.score-5); d[0]=100-d[1]-d[2]; }
-      else { d[1]=it.score; d[0]=Math.max(0,100-it.score-10); d[2]=100-d[0]-d[1]; }
+      let d = [0,0,0]; // [pos, neu, neg]
+      const posArr = it.keywords?.pos || [];
+      const negArr = it.keywords?.neg || [];
+      const mixArr = it.keywords?.keyword || [];
+      const totalKW = posArr.length + negArr.length + mixArr.length;
+      if(totalKW > 0){
+        d = [ (posArr.length/totalKW)*100, (mixArr.length/totalKW)*100, (negArr.length/totalKW)*100 ];
+      } else {
+        if(it.polarity==='positive'){ d[0]=it.score; d[1]=Math.max(0,100-it.score-5); d[2]=100-d[0]-d[1]; }
+        else if(it.polarity==='negative'){ d[2]=it.score; d[1]=Math.max(0,100-it.score-5); d[0]=100-d[1]-d[2]; }
+        else { d[1]=it.score; d[0]=Math.max(0,100-it.score-10); d[2]=100-d[0]-d[1]; }
+      }
       window._m = new Chart(document.getElementById('modal-sentiment-chart').getContext('2d'),{
         type:'doughnut',
-        data:{ labels:['เชิงบวก','เป็นกลาง','เชิงลบ'], datasets:[{ data:d, backgroundColor:['#4AD8B9','#FFB86B','#FF9248'], borderWidth:0 }]},
+        data:{ labels:['เชิงบวก','เป็นกลาง','เชิงลบ'], datasets:[{ data:d.map(x=>Math.round(x)), backgroundColor:['#4AD8B9','#FFB86B','#FF9248'], borderWidth:0 }]},
         options:{ responsive:false, plugins:{legend:{position:'bottom'}} , cutout:'70%' }
       });
       document.getElementById('modal-suggestion').textContent = (it.campaign?.idea || it.campaign?.taglines?.join(' • ') || '—');

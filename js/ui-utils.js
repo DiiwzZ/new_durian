@@ -62,22 +62,36 @@ class ChartManager {
     updateSentimentChart(tuned) {
         if (!this.sentimentChart) return;
         
-        const polarity = tuned.polarity;
-        const score = tuned.score;
+        // 1) พยายามคำนวณสัดส่วนจากจำนวนคีย์เวิร์ดจริงก่อน
+        const posArr = tuned?.preprocess?.pos || [];
+        const negArr = tuned?.preprocess?.neg || [];
+        const mixArr = tuned?.preprocess?.keyword || [];
+        const totalKeywords = posArr.length + negArr.length + mixArr.length;
+        
         let pos = 0, neu = 0, neg = 0;
         
-        if (polarity === 'positive') { 
-            pos = score; 
-            neu = Math.max(0, 100 - score - 5); 
-            neg = 100 - pos - neu; 
-        } else if (polarity === 'negative') { 
-            neg = score; 
-            neu = Math.max(0, 100 - score - 5); 
-            pos = 100 - neg - neu; 
-        } else { 
-            neu = score; 
-            pos = Math.max(0, 100 - score - 10); 
-            neg = 100 - neu - pos; 
+        if (totalKeywords > 0) {
+            // ใช้สัดส่วนตามจำนวนคำ แล้ว normalize เป็นเปอร์เซ็นต์
+            pos = (posArr.length / totalKeywords) * 100;
+            neu = (mixArr.length / totalKeywords) * 100;
+            neg = (negArr.length / totalKeywords) * 100;
+        } else {
+            // 2) ถ้าไม่มีคีย์เวิร์ดให้ fallback ตามตรรกะเดิม (polarity/score)
+            const polarity = tuned.polarity;
+            const score = tuned.score;
+            if (polarity === 'positive') { 
+                pos = score; 
+                neu = Math.max(0, 100 - score - 5); 
+                neg = 100 - pos - neu; 
+            } else if (polarity === 'negative') { 
+                neg = score; 
+                neu = Math.max(0, 100 - score - 5); 
+                pos = 100 - neg - neu; 
+            } else { 
+                neu = score; 
+                pos = Math.max(0, 100 - score - 10); 
+                neg = 100 - neu - pos; 
+            }
         }
 
         this.sentimentChart.data.datasets[0].data = [Math.round(pos), Math.round(neu), Math.round(neg)];
@@ -173,10 +187,27 @@ function showToast(msg, type = 'info') {
 
 // Loading Management
 function showLoading(on = true) {
-    const loading = document.getElementById('loading');
-    if (!loading) return;
+    const container = document.getElementById('campaign-suggestions');
+    if (!container) return;
     
-    loading.style.display = on ? 'flex' : 'none';
+    // Ensure container is positioned for local overlay
+    if (getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
+    }
+    
+    let local = document.getElementById('campaign-loading');
+    if (on) {
+        if (!local) {
+            local = document.createElement('div');
+            local.id = 'campaign-loading';
+            local.className = 'local-loading';
+            local.innerHTML = '<div class="loading-card"><div class="loading-spinner"></div><p style="margin:12px 0 0">กำลังวิเคราะห์ข้อความ...</p></div>';
+            container.appendChild(local);
+        }
+        local.style.display = 'flex';
+    } else if (local) {
+        local.style.display = 'none';
+    }
 }
 
 // Utility Functions
