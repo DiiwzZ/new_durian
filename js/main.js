@@ -41,9 +41,12 @@ function loadSettings() {
 }
 
 function saveSettings() {
+    const domainTunerCheckbox = document.getElementById('domain-tuner');
+    const geminiClassifierCheckbox = document.getElementById('gemini-classifier');
+
     const settings = {
-        domainTuner: document.getElementById('domain-tuner')?.checked || true,
-        geminiClassifier: document.getElementById('gemini-classifier')?.checked || false,
+        domainTuner: domainTunerCheckbox?.checked ?? true,
+        geminiClassifier: geminiClassifierCheckbox?.checked ?? false,
         theme: 'light'
     };
     
@@ -99,12 +102,21 @@ async function handleAnalyze() {
         const raw = await callAIForthai(text);
         
         // Step 2: Apply domain tuning if enabled
-        const useTuner = document.getElementById('domain-tuner')?.checked || true;
+        const domainTunerCheckbox = document.getElementById('domain-tuner');
+        const useTuner = domainTunerCheckbox ? domainTunerCheckbox.checked : true;
         let tuned = useTuner ? domainTune(text, raw) : { 
             polarity: raw?.sentiment?.polarity || 'neutral', 
             score: parseFloat(raw?.sentiment?.score || '50'), 
             preprocess: raw?.preprocess || {} 
         };
+
+        // Normalise preprocess to predictable structure
+        const preprocess = {
+            pos: Array.isArray(tuned?.preprocess?.pos) ? tuned.preprocess.pos : [],
+            neg: Array.isArray(tuned?.preprocess?.neg) ? tuned.preprocess.neg : [],
+            keyword: Array.isArray(tuned?.preprocess?.keyword) ? tuned.preprocess.keyword : []
+        };
+        tuned.preprocess = preprocess;
 
         // Step 3: Use Gemini for additional analysis if enabled
         if (document.getElementById('gemini-classifier')?.checked && CONFIG.GEMINI_API_KEY) {
@@ -117,13 +129,13 @@ async function handleAnalyze() {
                         tuned.score = (judge.label === 'neutral') ? 50 : Math.min(100, 60 + (judge.confidence * 40));
                         
                         // Add keywords from Gemini
-                        if (judge.keywords && judge.keywords.length > 0) {
+                        if (Array.isArray(judge.keywords) && judge.keywords.length > 0) {
                             if (judge.label === 'positive') {
-                                tuned.preprocess.pos = [...(tuned.preprocess.pos || []), ...judge.keywords];
+                                tuned.preprocess.pos = [...new Set([...tuned.preprocess.pos, ...judge.keywords])];
                             } else if (judge.label === 'negative') {
-                                tuned.preprocess.neg = [...(tuned.preprocess.neg || []), ...judge.keywords];
+                                tuned.preprocess.neg = [...new Set([...tuned.preprocess.neg, ...judge.keywords])];
                             } else {
-                                tuned.preprocess.keyword = [...(tuned.preprocess.keyword || []), ...judge.keywords];
+                                tuned.preprocess.keyword = [...new Set([...tuned.preprocess.keyword, ...judge.keywords])];
                             }
                         }
                         
@@ -140,7 +152,7 @@ async function handleAnalyze() {
 
         // Step 5: Generate campaign
         try {
-            const keywords = [...(tuned.preprocess.pos || []), ...(tuned.preprocess.neg || []), ...(tuned.preprocess.keyword || [])];
+            const keywords = [...tuned.preprocess.pos, ...tuned.preprocess.neg, ...tuned.preprocess.keyword];
             const campaign = await callGeminiCampaign(text, tuned.polarity, keywords);
             renderCampaign(campaign);
             

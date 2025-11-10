@@ -55,7 +55,7 @@
 
   <div class="modal-bg" id="history-modal">
     <div class="modal">
-      <button class="close" onclick="closeModal()">×</button>
+      <button class="close" id="history-modal-close" aria-label="ปิดหน้าต่าง">×</button>
       <h3 style="margin-top:0">รายละเอียดการวิเคราะห์</h3>
       <div id="modal-detail"></div>
       <div class="chart-box">
@@ -71,70 +71,12 @@
     </div>
   </div>
 
+  <div class="toast" id="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="config.js"></script>
+  <script src="js/ui-utils.js"></script>
   <script src="js/auth.js"></script>
-  <script>
-    // Check authentication before loading page
-    if (!authManager.isLoggedIn()) {
-      window.location.href = 'login.html';
-    }
-  </script>
-  <script>
-    const key='durian_history';
-    function getHistory(){ try{ return JSON.parse(localStorage.getItem(key)||'[]'); }catch{ return []; } }
-    function render(){
-      const arr = getHistory();
-      const el = document.getElementById('history-table');
-      if(!arr.length){ el.innerHTML = '<div style="padding:18px;text-align:center;color:#8aa">ไม่มีประวัติ</div>'; return; }
-      const rows = arr.map((x,i)=>`
-        <tr data-idx="${i}" class="row">
-          <td class="cell-date">${x.date||'-'}</td>
-          <td>${(x.text||'').replace(/</g,'&lt;')}</td>
-          <td class="cell-result"><b>${x.sentiment||'-'}</b> (${x.polarity||'-'} / ${Math.round(x.score||0)}%)</td>
-          <td>${(x.keywords?.pos||[]).slice(0,6).map(k=>`<span class="pill">${k}</span>`).join('')}
-              ${(x.keywords?.neg||[]).slice(0,6).map(k=>`<span class="pill">${k}</span>`).join('')}</td>
-        </tr>`).join('');
-      el.innerHTML = `<table>
-        <thead><tr><th class="cell-date">วันที่</th><th>ข้อความ</th><th class="cell-result">ผลลัพธ์</th><th>คำสำคัญ</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
-      document.querySelectorAll('.row').forEach(tr=> tr.addEventListener('click',()=> showModal(+tr.dataset.idx)));
-    }
-
-    function showModal(idx){
-      const it = getHistory()[idx];
-      const modal = document.getElementById('history-modal');
-      modal.style.display='flex';
-      const detail = document.getElementById('modal-detail');
-      detail.innerHTML = `
-        <div><b>วันที่:</b> ${it.date||'-'}</div>
-        <div style="margin:6px 0"><b>ข้อความ:</b><br><span class="pill" style="display:inline-block;margin-top:6px">${(it.text||'').replace(/</g,'&lt;')}</span></div>
-        <div><b>ผลวิเคราะห์:</b> ${it.sentiment||'-'} (${it.polarity||'-'} / ${Math.round(it.score||0)}%)</div>
-      `;
-      // Chart (ใช้สัดส่วนจากคีย์เวิร์ดจริง ถ้ามี)
-      if(window._m){ window._m.destroy(); }
-      let d = [0,0,0]; // [pos, neu, neg]
-      const posArr = it.keywords?.pos || [];
-      const negArr = it.keywords?.neg || [];
-      const mixArr = it.keywords?.keyword || [];
-      const totalKW = posArr.length + negArr.length + mixArr.length;
-      if(totalKW > 0){
-        d = [ (posArr.length/totalKW)*100, (mixArr.length/totalKW)*100, (negArr.length/totalKW)*100 ];
-      } else {
-        if(it.polarity==='positive'){ d[0]=it.score; d[1]=Math.max(0,100-it.score-5); d[2]=100-d[0]-d[1]; }
-        else if(it.polarity==='negative'){ d[2]=it.score; d[1]=Math.max(0,100-it.score-5); d[0]=100-d[1]-d[2]; }
-        else { d[1]=it.score; d[0]=Math.max(0,100-it.score-10); d[2]=100-d[0]-d[1]; }
-      }
-      window._m = new Chart(document.getElementById('modal-sentiment-chart').getContext('2d'),{
-        type:'doughnut',
-        data:{ labels:['เชิงบวก','เป็นกลาง','เชิงลบ'], datasets:[{ data:d.map(x=>Math.round(x)), backgroundColor:['#4AD8B9','#FFB86B','#FF9248'], borderWidth:0 }]},
-        options:{ responsive:false, plugins:{legend:{position:'bottom'}} , cutout:'70%' }
-      });
-      document.getElementById('modal-suggestion').textContent = (it.campaign?.idea || it.campaign?.taglines?.join(' • ') || '—');
-    }
-    function closeModal(){ document.getElementById('history-modal').style.display='none'; }
-
-    document.addEventListener('DOMContentLoaded', render);
-  </script>
+  <script src="js/storage-manager.js"></script>
+  <script src="js/history.js"></script>
 </body>
 </html>

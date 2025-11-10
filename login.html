@@ -158,7 +158,7 @@
     <div class="auth-container">
         <div class="auth-card">
             <h2>เข้าสู่ระบบ</h2>
-            <form id="loginForm" onsubmit="handleLogin(event)">
+            <form id="loginForm">
                 <div class="form-group">
                     <label for="username">ชื่อผู้ใช้</label>
                     <input type="text" id="username" name="username" required>
@@ -173,43 +173,10 @@
         </div>
     </div>
 
+    <div class="toast" id="toast"></div>
+    <script src="config.js"></script>
+    <script src="js/ui-utils.js"></script>
     <script src="js/auth.js"></script>
-    <script>
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            const result = authManager.login(username, password);
-            
-            if (result.success) {
-                showToast('เข้าสู่ระบบสำเร็จ');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-            } else {
-                showToast(result.message, 'error');
-            }
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 100);
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 300);
-            }, 3000);
-        }
-    </script>
+    <script src="js/auth-forms.js"></script>
 </body>
 </html> 

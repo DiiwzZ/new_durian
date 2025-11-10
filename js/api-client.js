@@ -16,10 +16,11 @@ async function callAIForthai(text) {
 async function callGeminiCampaign(text, polarity, keywords) {
     if (!CONFIG.GEMINI_API_KEY) throw new Error('ยังไม่ได้ตั้งค่า GEMINI_API_KEY');
     
+    const safeKeywords = Array.isArray(keywords) ? keywords : [];
     const prompt = [
         "คุณคือ Copywriter โปรโมททุเรียน ช่วยเขียนไอเดียแคมเปญสั้น ๆ (ภาษาไทย)",
         `Polarity: ${toThaiPolarity(polarity)} (${polarity})`,
-        `Keywords: ${keywords.slice(0,10).join(", ")}`,
+        `Keywords: ${safeKeywords.slice(0,10).join(", ")}`,
         "กรุณาตอบในรูปแบบ JSON เท่านั้น โดยไม่มีข้อความอื่น:",
         "{\"taglines\":[\"ข้อความโปรโมท 1\",\"ข้อความโปรโมท 2\",\"ข้อความโปรโมท 3\"],\"idea\":\"ไอเดียแคมเปญหลัก\"}"
     ].join("\n");
