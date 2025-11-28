@@ -4,7 +4,7 @@
 const CONFIG = {
     // API Keys
     AIFORTHAI_API_KEY: "DAL6vk7IdeeHntRei5mDvYFBXN18Qmp5",
-    GEMINI_API_KEY: "AIzaSyBahSAr0ptYZ6bCyl2yfK1ZlfU6eMHRe5g",
+    GEMINI_API_KEY: "AIzaSyDrkIWMvBPHyV3or713GO5VbAhvIV8YpHc",
     
     // API Endpoints
     AIFORTHAI_ENDPOINT: "https://api.aiforthai.in.th/ssense",
